@@ -38,7 +38,7 @@
   };
   var LEVEL_NAMES = ["Explorador", "Descobridor", "Investigador", "Criador", "Mestre"];
   var POINTS_PER_LEVEL = 50;
-  var AGE_LEVEL = { "3-5": 1, "6-8": 2, "9-12": 3, "13-17": 3, "adulto": 3 };
+  var AGE_LEVEL = { "3-5": 1, "6-8": 2, "9-12": 3, "13-17": 4, "adulto": 5 };
 
   /* ---------- Utilidades ---------- */
   function $(id) { return document.getElementById(id); }
@@ -98,6 +98,28 @@
         if (b > a) { var t = a; a = b; b = t; }
         prompt = a + " − " + b + " = ?"; answer = a - b;
         hint = "Comece em " + a + " e conte para trás " + b + ".";
+      }
+    } else if (level === 4) {
+      if (Math.random() < 0.5) {
+        var p = [10, 20, 25, 50][rand(0, 3)], base = rand(2, 10) * 20;
+        prompt = p + "% de " + base + " = ?"; answer = base * p / 100;
+        hint = "Calcule " + p + " por cento: divida " + base + " por 100 e multiplique por " + p + ".";
+      } else {
+        var x = rand(2, 9), m = rand(2, 5), c = rand(1, 9);
+        prompt = m + "x + " + c + " = " + (m * x + c) + ". Quanto vale x?"; answer = x;
+        hint = "Tire " + c + " dos dois lados e depois divida por " + m + ".";
+      }
+    } else if (level === 5) {
+      if (Math.random() < 0.5) {
+        var d = [10, 20, 25, 50][rand(0, 3)], price = rand(2, 10) * 20;
+        prompt = "Um produto custa R$ " + price + " e tem " + d + "% de desconto. Quanto você paga (em reais)?";
+        answer = price * (100 - d) / 100;
+        hint = "Calcule o desconto e tire do preço.";
+      } else {
+        var cost = rand(11, 89);
+        prompt = "Você paga R$ 100 por uma compra de R$ " + cost + ". Qual o troco (em reais)?";
+        answer = 100 - cost;
+        hint = "Faça 100 menos " + cost + ".";
       }
     } else {
       a = rand(3, 9); b = rand(3, 9);
@@ -191,12 +213,12 @@
   function buildQuestions(activity, level) {
     if (activity.generator) {
       var out = [];
-      for (var i = 0; i < 3; i++) out.push(activity.generator(level));
+      for (var i = 0; i < 5; i++) out.push(activity.generator(level));
       return out;
     }
     var same = shuffle(activity.questions.filter(function (q) { return q.level === level; }));
     var other = shuffle(activity.questions.filter(function (q) { return q.level !== level; }));
-    return same.concat(other).slice(0, 3);
+    return same.concat(other).slice(0, 5);
   }
 
   /* ---------- Navegação ---------- */
@@ -586,10 +608,33 @@
     });
   }
 
+  /* ---------- Banco de perguntas extra (conteudo.js) ---------- */
+  var contentMerged = false;
+  function mergeContent() {
+    if (contentMerged || !window.MB_EXTRA) return;
+    contentMerged = true;
+    Object.keys(window.MB_EXTRA).forEach(function (id) {
+      var act = ACTIVITIES.filter(function (a) { return a.id === id; })[0];
+      if (!act || !act.questions) return;
+      window.MB_EXTRA[id].forEach(function (r) { act.questions.push(mc(r[0], r[1], r[2], r[3], r[4], r[5])); });
+    });
+  }
+  function loadContent() {
+    var s = document.createElement("script");
+    s.src = "conteudo.js";
+    s.onload = mergeContent;
+    document.head.appendChild(s);
+  }
+
   /* ---------- Início ---------- */
   function init() {
     $("ageGroup").value = AGE_LEVEL[state.age] ? state.age : "6-8";
     state.age = $("ageGroup").value;
+    loadContent();
+    if (!document.querySelector('[data-filter="logica"]')) {
+      var chip = document.querySelector('[data-filter="emocional"]');
+      if (chip) chip.insertAdjacentHTML("afterend", '<button class="filter-chip" data-filter="logica">Lógica</button>');
+    }
     initComm();
     applySettings();
     renderActivities();

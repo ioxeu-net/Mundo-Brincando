@@ -1,6 +1,6 @@
 /* Mundo Brincando — funciona sem internet. Mude o número da versão ao publicar mudanças. */
-var CACHE = "mb-evolved-v1";
-var ARQUIVOS = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+var CACHE = "mb-evolved-v2";
+var ARQUIVOS = ["./", "index.html", "styles.css", "app.js", "conteudo.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ARQUIVOS); }).then(function () { return self.skipWaiting(); }));
 });
