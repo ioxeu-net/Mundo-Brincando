@@ -9,6 +9,7 @@
     level: "mb_evolved_level",
     age: "mb_evolved_age",
     settings: "mb_evolved_settings",
+    comm: "mb_evolved_comm",
     routine: "mb_evolved_routine"
   };
   function load(key, fallback) {
@@ -25,7 +26,8 @@
   var DEFAULT_SETTINGS = {
     reducedMotion: false, muteAudio: false, muteVibration: true,
     themeChoice: "calmo", textScale: "normal",
-    showText: true, readAloud: false, visualHints: true
+    showText: true, readAloud: false, visualHints: true,
+    commSpeak: false, voiceName: "", voiceRate: "1"
   };
   var state = {
     score: Number(load(KEYS.score, 0)) || 0,
@@ -50,13 +52,16 @@
     return a;
   }
   function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-  function speak(text) {
-    if (!state.settings.readAloud || state.settings.muteAudio) return;
+  function speak(text, force) {
+    if ((!state.settings.readAloud && !force) || state.settings.muteAudio) return;
     if (!("speechSynthesis" in window)) return;
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.lang = "pt-BR";
+      u.rate = parseFloat(state.settings.voiceRate) || 1;
+      var vs = window.speechSynthesis.getVoices();
+      for (var i = 0; i < vs.length; i++) { if (vs[i].name === state.settings.voiceName) { u.voice = vs[i]; u.lang = vs[i].lang; } }
       window.speechSynthesis.speak(u);
     } catch (e) { /* voz indisponível */ }
   }
@@ -424,7 +429,7 @@
       if (t.hasAttribute("data-message")) {
         var m = t.getAttribute("data-message");
         $("communicationMessage").textContent = m;
-        speak(m);
+        speak(m, !!state.settings.commSpeak);
         return;
       }
     });
@@ -443,16 +448,156 @@
     bindSettings();
   }
 
+  /* ---------- Quadro de comunicação personalizável ---------- */
+  var DEFAULT_COMM = [
+    { icon: "🙋", label: "Preciso de ajuda", message: "Quero ajuda" },
+    { icon: "⏸", label: "Quero uma pausa", message: "Quero uma pausa" },
+    { icon: "❔", label: "Não entendi", message: "Não entendi" },
+    { icon: "↻", label: "Repetir", message: "Quero repetir" },
+    { icon: "✓", label: "Terminei", message: "Terminei" },
+    { icon: "■", label: "Quero parar", message: "Quero parar" }
+  ];
+  var MAX_COMM = 24, comm = [], commEdit = false;
+  function h(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function saveComm() { save(KEYS.comm, comm); }
+  function renderCommGrid() {
+    $("communicationGrid").innerHTML = comm.map(function (c) {
+      var m = c.message || c.label;
+      return '<button type="button" data-message="' + h(m) + '" aria-label="' + h(m) + '">' +
+        (c.photo ? '<img class="comm-img" src="' + c.photo + '" alt="">' : '<span aria-hidden="true">' + h(c.icon || "•") + '</span>') +
+        h(c.label) + '</button>';
+    }).join("");
+  }
+  function renderCommEdit() {
+    var box = $("commEdit");
+    box.hidden = !commEdit;
+    $("commToggle").textContent = commEdit ? "Concluir edição" : "Personalizar quadro";
+    if (!commEdit) return;
+    box.innerHTML = '<p class="muted">Mude o texto, o símbolo ou coloque uma foto. As mudanças ficam salvas neste aparelho.</p>' +
+      comm.map(function (c, i) {
+        return '<div class="comm-row"><strong>Botão ' + (i + 1) + '</strong>' +
+          '<label>Símbolo (emoji)<input data-i="' + i + '" data-f="icon" maxlength="4" value="' + h(c.icon) + '"></label>' +
+          '<label>Texto do botão<input data-i="' + i + '" data-f="label" value="' + h(c.label) + '"></label>' +
+          '<label>Mensagem mostrada na tela<input data-i="' + i + '" data-f="message" value="' + h(c.message) + '"></label>' +
+          '<label>Foto (opcional)<input type="file" accept="image/*" data-photo="' + i + '"></label>' +
+          (c.photo ? '<button type="button" class="secondary-button" data-nophoto="' + i + '">Tirar a foto</button> ' : '') +
+          '<button type="button" class="secondary-button" data-del="' + i + '">Remover este botão</button></div>';
+      }).join("") +
+      '<div class="comm-actions"><button type="button" class="primary-button" id="commAdd">Adicionar botão</button> ' +
+      '<button type="button" class="secondary-button" id="commRestore">Voltar ao quadro original</button></div>';
+  }
+  function smallPhoto(file, cb) {
+    var r = new FileReader();
+    r.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        var sc = Math.min(1, 160 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+        c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        cb(c.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = e.target.result;
+    };
+    r.readAsDataURL(file);
+  }
+  function fillVoices() {
+    var s = $("voiceName");
+    if (!s) return;
+    var vs = ("speechSynthesis" in window) ? window.speechSynthesis.getVoices() : [];
+    var pt = vs.filter(function (v) { return /^pt/i.test(v.lang); });
+    var list = pt.length ? pt : vs;
+    s.innerHTML = '<option value="">Voz padrão do aparelho</option>' + list.map(function (v) {
+      return '<option value="' + h(v.name) + '">' + h(v.name) + ' (' + h(v.lang) + ')</option>';
+    }).join("");
+    s.value = state.settings.voiceName || "";
+  }
+  function initComm() {
+    var saved = load(KEYS.comm, null);
+    comm = (Array.isArray(saved) && saved.length) ? saved : JSON.parse(JSON.stringify(DEFAULT_COMM));
+    $("communicationGrid").insertAdjacentHTML("afterend",
+      '<div class="comm-tools"><button type="button" class="secondary-button" id="commToggle">Personalizar quadro</button>' +
+      '<label class="switch-row"><span>Falar a mensagem em voz alta</span><input type="checkbox" id="commSpeak"></label>' +
+      '<label for="voiceName">Voz</label><select id="voiceName"></select>' +
+      '<label for="voiceRate">Velocidade da voz</label><select id="voiceRate"><option value="0.8">Devagar</option><option value="1">Normal</option><option value="1.2">Rápida</option></select>' +
+      '<button type="button" class="secondary-button" id="commTest">Testar voz</button></div>' +
+      '<div id="commEdit" class="comm-edit" hidden></div>');
+    renderCommGrid(); renderCommEdit(); fillVoices();
+    if ("speechSynthesis" in window) window.speechSynthesis.onvoiceschanged = fillVoices;
+    $("commToggle").addEventListener("click", function () { commEdit = !commEdit; renderCommEdit(); });
+    $("commTest").addEventListener("click", function () { speak("Olá! Esta é a minha voz.", true); });
+    var box = $("commEdit");
+    box.addEventListener("change", function (e) {
+      var t = e.target, i;
+      if (t.hasAttribute("data-f")) {
+        i = +t.getAttribute("data-i");
+        comm[i][t.getAttribute("data-f")] = t.value.trim();
+        saveComm(); renderCommGrid();
+      } else if (t.hasAttribute("data-photo") && t.files[0]) {
+        i = +t.getAttribute("data-photo");
+        smallPhoto(t.files[0], function (src) { comm[i].photo = src; saveComm(); renderCommGrid(); renderCommEdit(); });
+      }
+    });
+    box.addEventListener("click", function (e) {
+      var t = e.target.closest("button");
+      if (!t) return;
+      if (t.hasAttribute("data-del")) {
+        if (comm.length <= 1) return alert("O quadro precisa ter pelo menos um botão.");
+        if (confirm("Remover este botão?")) { comm.splice(+t.getAttribute("data-del"), 1); saveComm(); renderCommGrid(); renderCommEdit(); }
+      } else if (t.hasAttribute("data-nophoto")) {
+        delete comm[+t.getAttribute("data-nophoto")].photo; saveComm(); renderCommGrid(); renderCommEdit();
+      } else if (t.id === "commAdd") {
+        if (comm.length >= MAX_COMM) return alert("O quadro já tem " + MAX_COMM + " botões.");
+        comm.push({ icon: "💬", label: "Novo botão", message: "Novo botão" }); saveComm(); renderCommGrid(); renderCommEdit();
+      } else if (t.id === "commRestore") {
+        if (confirm("Voltar ao quadro original? Seus botões personalizados serão apagados.")) {
+          comm = JSON.parse(JSON.stringify(DEFAULT_COMM)); saveComm(); renderCommGrid(); renderCommEdit();
+        }
+      }
+    });
+  }
+
+  /* ---------- Instalar como app (PWA) ---------- */
+  function initPWA() {
+    var secure = location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    if ("serviceWorker" in navigator && secure) navigator.serviceWorker.register("sw.js").catch(function () {});
+    if (!document.querySelector('link[rel="manifest"]')) {
+      var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
+    }
+    var standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
+    if (standalone) return;
+    var card = document.createElement("section");
+    card.className = "support-strip install-card";
+    card.innerHTML = '<div class="support-icon" aria-hidden="true">📲</div><div><strong>Use como aplicativo no celular</strong>' +
+      '<p>Fica na tela inicial e abre mais rápido, mesmo com internet fraca.</p>' +
+      '<details><summary>Como instalar, passo a passo</summary><p><strong>Android (Chrome):</strong> toque nos três pontinhos no canto de cima, depois em “Instalar app” ou “Adicionar à tela inicial”.</p>' +
+      '<p><strong>iPhone (Safari):</strong> toque no botão de compartilhar (quadrado com seta), role a lista e toque em “Adicionar à Tela de Início”.</p></details></div>' +
+      '<button type="button" class="primary-button" id="installBtn" hidden>Instalar agora</button>';
+    $("view-inicio").appendChild(card);
+    var deferred = null;
+    window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; $("installBtn").hidden = false; });
+    $("installBtn").addEventListener("click", function () {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.then(function () { deferred = null; $("installBtn").hidden = true; });
+    });
+  }
+
   /* ---------- Início ---------- */
   function init() {
     $("ageGroup").value = AGE_LEVEL[state.age] ? state.age : "6-8";
     state.age = $("ageGroup").value;
+    initComm();
     applySettings();
     renderActivities();
     renderProgress();
     loadRoutine();
     bindEvents();
     showView("inicio");
+    initPWA();
   }
   document.addEventListener("DOMContentLoaded", init);
 })();
