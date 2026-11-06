@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#263b66">
+  <meta name="description" content="Mundo Brincando Evoluído — atividades educativas com opções de acessibilidade e personalização.">
+  <title>Mundo Brincando | Módulo Evoluído</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">MB</div>
+      <div><strong>Mundo Brincando</strong><span>Módulo Evoluído</span></div>
+    </div>
+    <nav class="top-actions" aria-label="Navegação principal">
+      <button class="nav-button active" data-view="inicio">Início</button>
+      <button class="nav-button" data-view="atividades">Atividades</button>
+      <button class="nav-button" data-view="rotina">Minha rotina</button>
+      <button class="nav-button" data-view="acessibilidade">Acessibilidade</button>
+    </nav>
+  </header>
+
+  <main id="conteudo" class="page">
+    <section class="welcome panel" id="welcome">
+      <div>
+        <p class="eyebrow">APRENDER NO SEU RITMO</p>
+        <h1>Um espaço para descobrir, praticar e aprender.</h1>
+        <p class="lead">Escolha uma atividade. Você pode pausar, pedir ajuda ou mudar as configurações quando quiser.</p>
+      </div>
+      <div class="welcome-controls">
+        <label for="ageGroup">Faixa de aprendizagem</label>
+        <select id="ageGroup">
+          <option value="3-5">3 a 5 anos</option>
+          <option value="6-8" selected>6 a 8 anos</option>
+          <option value="9-12">9 a 12 anos</option>
+          <option value="13-17">13 a 17 anos</option>
+          <option value="adulto">Adultos</option>
+        </select>
+        <div class="progress-card">
+          <span>Seu progresso neste módulo</span>
+          <strong id="scoreDisplay">0 pontos</strong>
+          <div class="progress-track"><div id="progressBar"></div></div>
+          <small id="levelDisplay">Etapa 1 · Explorador</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="view active" id="view-inicio">
+      <div class="section-heading">
+        <div><p class="eyebrow">CONTINUE EXPLORANDO</p><h2>O que vamos aprender hoje?</h2></div>
+        <button class="text-button" data-go="atividades">Ver todas as atividades →</button>
+      </div>
+      <div class="activity-grid" id="homeActivities"></div>
+      <section class="support-strip">
+        <div class="support-icon" aria-hidden="true">◉</div>
+        <div><strong>Você decide o ritmo.</strong><p>Não há contagem regressiva. Faça uma pausa e volte quando quiser.</p></div>
+        <button class="secondary-button" data-go="acessibilidade">Ajustar experiência</button>
+      </section>
+    </section>
+
+    <section class="view" id="view-atividades">
+      <div class="section-heading"><div><p class="eyebrow">BIBLIOTECA</p><h2>Atividades de aprendizagem</h2></div></div>
+      <div class="filters" role="group" aria-label="Filtrar atividades">
+        <button class="filter-chip selected" data-filter="todas">Todas</button>
+        <button class="filter-chip" data-filter="linguagem">Linguagem</button>
+        <button class="filter-chip" data-filter="matematica">Matemática</button>
+        <button class="filter-chip" data-filter="mundo">Conhecer o mundo</button>
+        <button class="filter-chip" data-filter="emocional">Socioemocional</button>
+      </div>
+      <div class="activity-grid" id="allActivities"></div>
+    </section>
+
+    <section class="view" id="view-rotina">
+      <div class="section-heading"><div><p class="eyebrow">PREVISIBILIDADE E AUTONOMIA</p><h2>Minha rotina</h2></div></div>
+      <div class="routine-layout">
+        <div class="panel">
+          <h3>Passos desta sessão</h3>
+          <p class="muted">Marque cada etapa quando terminar. Você pode parar e continuar depois.</p>
+          <ol class="routine-list" id="routineList">
+            <li><label><input type="checkbox"> Escolher uma atividade</label></li>
+            <li><label><input type="checkbox"> Fazer a atividade</label></li>
+            <li><label><input type="checkbox"> Fazer uma pausa, se quiser</label></li>
+            <li><label><input type="checkbox"> Escolher o próximo passo</label></li>
+          </ol>
+          <button class="secondary-button" id="resetRoutine">Reiniciar minha rotina</button>
+        </div>
+        <div class="panel calm-panel">
+          <div class="calm-symbol" aria-hidden="true">☁</div>
+          <h3>Está na hora de uma pausa?</h3>
+          <p>Você pode respirar, beber água, alongar-se ou simplesmente ficar em silêncio.</p>
+          <button class="primary-button" id="pauseButton">Iniciar pausa tranquila</button>
+          <p id="pauseMessage" class="status-message" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-acessibilidade">
+      <div class="section-heading"><div><p class="eyebrow">MINHA EXPERIÊNCIA</p><h2>Configurações de acessibilidade</h2></div></div>
+      <p class="lead narrow">Cada pessoa tem preferências diferentes. Ajuste os recursos conforme o que funciona melhor para quem está usando.</p>
+      <div class="settings-grid">
+        <div class="panel setting-card">
+          <h3>Estímulos sensoriais</h3>
+          <label class="switch-row"><span>Reduzir animações</span><input type="checkbox" id="reducedMotion"></label>
+          <label class="switch-row"><span>Desligar sons e voz</span><input type="checkbox" id="muteAudio"></label>
+          <label class="switch-row"><span>Desligar vibração</span><input type="checkbox" id="muteVibration" checked></label>
+          <label for="themeChoice">Aparência</label>
+          <select id="themeChoice"><option value="calmo">Suave</option><option value="natural">Natural</option><option value="contraste">Alto contraste</option></select>
+          <label for="textScale">Tamanho do texto</label>
+          <select id="textScale"><option value="normal">Padrão</option><option value="large">Maior</option><option value="xlarge">Bem maior</option></select>
+        </div>
+        <div class="panel setting-card">
+          <h3>Como prefere receber instruções?</h3>
+          <label class="switch-row"><span>Mostrar instruções escritas</span><input type="checkbox" id="showText" checked></label>
+          <label class="switch-row"><span>Usar leitura em voz alta</span><input type="checkbox" id="readAloud"></label>
+          <label class="switch-row"><span>Mostrar dicas visuais</span><input type="checkbox" id="visualHints" checked></label>
+          <p class="small-note">A leitura em voz alta depende dos recursos de voz disponíveis no navegador.</p>
+        </div>
+        <div class="panel setting-card communication-card">
+          <h3>Quadro de comunicação</h3>
+          <p class="muted">Atalhos visuais para expressar necessidades. Os botões não falam por você: mostram a mensagem escolhida na tela.</p>
+          <div class="communication-grid" id="communicationGrid">
+            <button data-message="Quero ajuda" aria-label="Quero ajuda"><span>🙋</span>Preciso de ajuda</button>
+            <button data-message="Quero uma pausa" aria-label="Quero uma pausa"><span>⏸</span>Quero uma pausa</button>
+            <button data-message="Não entendi" aria-label="Não entendi"><span>❔</span>Não entendi</button>
+            <button data-message="Quero repetir" aria-label="Quero repetir"><span>↻</span>Repetir</button>
+            <button data-message="Terminei" aria-label="Terminei"><span>✓</span>Terminei</button>
+            <button data-message="Quero parar" aria-label="Quero parar"><span>■</span>Quero parar</button>
+          </div>
+          <p id="communicationMessage" class="communication-message" aria-live="polite">Selecione uma mensagem.</p>
+        </div>
+      </div>
+      <div class="settings-footer"><button class="secondary-button" id="resetSettings">Restaurar configurações padrão</button><span id="settingsSaved" role="status">As preferências ficam salvas neste dispositivo.</span></div>
+    </section>
+
+    <section class="view" id="view-jogo">
+      <div class="game-top"><button class="text-button" data-go="atividades">← Voltar às atividades</button><span id="gameCategory" class="eyebrow"></span></div>
+      <div class="game-panel panel">
+        <div class="game-meta"><span id="questionCount">Atividade</span><span id="gameProgress">Etapa 1</span></div>
+        <h2 id="gameTitle">Vamos praticar?</h2>
+        <p id="gameInstruction" class="game-instruction">Leia a pergunta e escolha uma resposta.</p>
+        <div id="questionArea" class="question-area"></div>
+        <p id="feedback" class="feedback" aria-live="polite"></p>
+        <div class="game-actions"><button class="secondary-button" id="hintButton">Preciso de uma dica</button><button class="primary-button" id="nextButton" disabled>Continuar</button></div>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>Mundo Brincando · Módulo Evoluído</span><span>Aprender no próprio ritmo.</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
